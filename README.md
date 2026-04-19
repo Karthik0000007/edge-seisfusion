@@ -345,9 +345,3 @@ Key tuning parameters:
 
 3. See `ARCHITECTURE.md` for detailed setup and development instructions.
 
-## References
-
-- **Detailed architecture**: See `ARCHITECTURE.md` for component descriptions, execution flow, failure analysis, and design trade-offs
-- **Implementation plan**: See `plan.txt` for structured development roadmap with resource budgets and milestones
-- **Resource budget**: See `contracts/resource_budget_contract.v1.json` for hardware constraints and acceptance criteria
-- **Proposal**: See `EdgeSeisFusion_Proposa.txt` for project motivation and research objectives
