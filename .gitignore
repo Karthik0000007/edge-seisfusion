@@ -1,0 +1,105 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data and models (keep structure, ignore large files)
+*.h5
+*.hdf5
+*.tflite
+*.onnx
+*.pth
+*.pt
+*.pb
+*.savedmodel/
+*.zip
+*.tar.gz
+datasets/
+
+# Build artifacts
+firmware/build/
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Logs
+*.log
+logs/
+*.txt.log
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Config with secrets (if any)
+.env
+.env.local
+config/deployment.local.yaml
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node (if using dashboard)
+node_modules/
+dist/
+npm-debug.log
+
+# Deployment
+firmware/bin/
+firmware/hex/
