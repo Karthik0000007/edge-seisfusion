@@ -1,0 +1,41 @@
+# Dockerfile for Offline Development (Training & Validation)
+# Python 3.11 + TensorFlow 2.12 + scientific computing stack
+
+FROM tensorflow/tensorflow:2.12.0-gpu
+
+LABEL maintainer="EdgeSeisFusion Team"
+LABEL description="Offline development environment for EdgeSeisFusion model training"
+
+# Set working directory
+WORKDIR /workspace
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    build-essential \
+    cmake \
+    graphviz \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements-offline.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-offline.txt
+
+# Copy project code
+COPY . .
+
+# Create directories for data and outputs
+RUN mkdir -p /workspace/datasets/raw /workspace/datasets/normalized
+RUN mkdir -p /workspace/models/checkpoints
+RUN mkdir -p /workspace/outputs
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV TF_CPP_MIN_LOG_LEVEL=2
+
+# Default command: start Jupyter or bash
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]

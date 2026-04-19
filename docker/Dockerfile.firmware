@@ -1,0 +1,49 @@
+# Dockerfile for Firmware Development (ARM Embedded Compilation)
+# Sony Spresense SDK + ARM GCC toolchain + build tools
+
+FROM ubuntu:22.04
+
+LABEL maintainer="EdgeSeisFusion Team"
+LABEL description="Firmware development environment for EdgeSeisFusion (Sony Spresense)"
+
+# Set working directory
+WORKDIR /firmware
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    curl \
+    wget \
+    python3 \
+    python3-pip \
+    ninja-build \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ARM embedded toolchain
+RUN apt-get update && apt-get install -y \
+    arm-none-eabi-gcc \
+    arm-none-eabi-g++ \
+    arm-none-eabi-gdb \
+    arm-none-eabi-newlib \
+    libnewlib-arm-none-eabi \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify ARM toolchain installation
+RUN arm-none-eabi-gcc --version
+
+# Install CMake 3.20+ (some older distros have older CMake)
+RUN pip3 install --no-cache-dir cmake>=3.20
+
+# Set environment variables
+ENV PATH="/usr/bin:${PATH}"
+ENV COMPILER_PATH="/usr/bin/arm-none-eabi-"
+
+# Create build directories
+RUN mkdir -p /firmware/build
+RUN mkdir -p /firmware/bin
+
+# Default command: bash shell for interactive development
+CMD ["/bin/bash"]
