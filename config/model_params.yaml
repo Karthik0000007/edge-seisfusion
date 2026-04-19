@@ -1,0 +1,136 @@
+# Machine Learning Model Parameters
+# Used for training, quantization, and evaluation
+# Phase 6: Model training specification
+
+# 1D Convolutional Autoencoder Architecture
+architecture:
+  type: "1d_cae_compact"
+  input_shape: [1024, 35]       # 1024 samples × 35 features (5 channels × 7 bands)
+
+  # Encoder
+  encoder:
+    - layer: "Conv1D"
+      filters: 32
+      kernel_size: 3
+      strides: 1
+      activation: "relu"
+    - layer: "MaxPooling1D"
+      pool_size: 2
+      strides: 2
+    - layer: "Conv1D"
+      filters: 16
+      kernel_size: 3
+      strides: 1
+      activation: "relu"
+    - layer: "MaxPooling1D"
+      pool_size: 2
+      strides: 2
+    - layer: "Conv1D"
+      filters: 8
+      kernel_size: 3
+      strides: 1
+      activation: "relu"
+
+  # Bottleneck (latent representation)
+  bottleneck:
+    filters: 8
+    kernel_size: 3
+    description: "8-channel latent representation"
+
+  # Decoder (symmetric)
+  decoder:
+    - layer: "UpSampling1D"
+      size: 2
+    - layer: "Conv1D"
+      filters: 16
+      kernel_size: 3
+      strides: 1
+      activation: "relu"
+    - layer: "UpSampling1D"
+      size: 2
+    - layer: "Conv1D"
+      filters: 32
+      kernel_size: 3
+      strides: 1
+      activation: "relu"
+    - layer: "Conv1D"
+      filters: 35                # Match input: 5 channels × 7 bands
+      kernel_size: 3
+      strides: 1
+      activation: "linear"       # Linear output for reconstruction
+
+# Training Parameters
+training:
+  loss_function: "mse"           # Mean Squared Error (reconstruction loss)
+  optimizer: "adam"
+  learning_rate: 0.001
+  batch_size: 32
+  epochs: 100
+  validation_split: 0.1
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    monitor: "val_auroc"         # Monitor AUROC on validation set
+    patience: 10                 # Stop if no improvement for 10 epochs
+    restore_best_weights: true
+
+# Data Split
+data_split:
+  train_ratio: 0.80             # 80% training
+  validation_ratio: 0.10        # 10% validation
+  test_ratio: 0.10              # 10% testing
+  split_strategy: "by_structure" # Split by infrastructure site, not random rows
+
+# Anomaly Detection (Phase 6)
+anomaly_detection:
+  method: "reconstruction_error"  # L2 loss as anomaly score
+  threshold_method: "fixed"       # Use fixed threshold (μ + 2σ)
+  threshold_sigma_multiplier: 2.0 # μ + 2σ
+  confidence_metric: "normalized_error"
+
+# Optional: OC-SVM (Phase 7)
+ocsvm:
+  enabled: false                # Set true to enable
+  kernel: "rbf"
+  gamma: 0.5
+  nu: 0.05                      # Expected false positive rate: 5%
+
+# Quantization Parameters (Phase 8)
+quantization:
+  enabled: true                 # Use INT8 quantization for firmware
+  dtype: "int8"
+  method: "post_training"       # Quantize after training
+
+  calibration:
+    num_samples: 1000           # Use 1000 windows for calibration
+    representative_dataset: "validation_set"
+
+  # Per-channel quantization for better accuracy
+  per_channel: true
+
+  target_size_kb: 50            # Target <50 KB model size
+  acceptable_accuracy_drop: 0.03 # Accept ≤3% AUROC loss
+
+# Export & Validation
+export:
+  format: "tflite"              # TensorFlow Lite format
+  target_platform: "microcontroller"  # TFLM (TensorFlow Lite for Microcontrollers)
+
+  # Operator support verification
+  required_operators:
+    - "Conv1D"
+    - "MaxPooling1D"
+    - "UpSampling1D"
+    - "Reshape"
+    - "Softmax"
+
+  # Model validation
+  validate_parity: true         # Verify quantized model accuracy vs. float32
+
+# Performance Metrics (Evaluation)
+metrics:
+  auroc_target: 0.95            # Target AUROC ≥ 0.95
+  f1_target: 0.90               # Target F1 ≥ 0.90
+  false_positive_rate_target: 0.005  # <0.5% FPR
+  detection_latency_ms: 1000    # Per 1-second window
