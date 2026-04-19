@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EdgeSeisFusion Resource Budget Contract",
+  "version": "1.0",
+  "description": "Formal specification of hardware constraints and acceptance criteria",
+  "hardware": {
+    "platform": {
+      "device": "Sony Spresense",
+      "processor": "ARM Cortex-M4F",
+      "frequency_mhz": 156,
+      "cores": 1
+    },
+    "memory": {
+      "sram_mb": 1.5,
+      "flash_mb": 2.0,
+      "sram_allocation_bytes": {
+        "ring_buffers": 204800,
+        "dsp_workspace": 102400,
+        "tensor_arena": 614400,
+        "inference_scratch": 307200,
+        "state_heap": 204800,
+        "total": 1433600,
+        "utilization_percent": 95.6
+      },
+      "flash_allocation_bytes": {
+        "bootloader": 102400,
+        "firmware_code": 819200,
+        "model_weights": 81920,
+        "config_strings": 51200,
+        "total": 1054720,
+        "utilization_percent": 50.2
+      }
+    },
+    "power": {
+      "active_mw": {
+        "target": 50,
+        "acceptable_range": [40, 60]
+      },
+      "sleep_mw": {
+        "target": 1,
+        "acceptable_range": [0.5, 2]
+      },
+      "duty_cycle_percent": {
+        "target": 1,
+        "acceptable_range": [0.5, 1.5]
+      },
+      "battery_life_years": {
+        "target": 3,
+        "acceptable_range": [2, 5],
+        "battery_type": "AA alkaline (2.6 Ah per cell)"
+      }
+    },
+    "communication": {
+      "protocol": "LoRaWAN/NB-IoT",
+      "bandwidth_kbps": 4.8,
+      "payload_size_bytes": {
+        "max_alert": 20,
+        "header": 8,
+        "data": 12
+      }
+    }
+  },
+  "timing": {
+    "sampling_rate_hz": 1000,
+    "window_size_samples": 1024,
+    "window_duration_sec": 1.0,
+    "per_window_latency_ms": {
+      "budget_total": 400,
+      "dma_capture": 1024,
+      "dsp_processing": 100,
+      "inference": 300,
+      "anomaly_scoring": 10,
+      "payload_encoding": 2,
+      "radio_tx": 100
+    },
+    "jitter_tolerance_us": 1.0
+  },
+  "performance": {
+    "model_accuracy": {
+      "auroc_target": 0.95,
+      "auroc_quantized": 0.92,
+      "acceptable_accuracy_drop_percent": 3
+    },
+    "false_positive_rate": {
+      "healthy_baseline": 0.005,
+      "under_thermal_drift": 0.01
+    },
+    "detection_latency": {
+      "per_window_ms": 1000,
+      "description": "Alert generated within 1 second of anomaly onset"
+    }
+  },
+  "reliability": {
+    "uptime_target_percent": 99.5,
+    "watchdog_timeout_sec": 30,
+    "data_loss_tolerance_percent": 0.1,
+    "model_integrity_check": "CRC32 on weights"
+  },
+  "acceptance_criteria": {
+    "phase_5": {
+      "description": "DSP Reference Pipeline",
+      "criteria": [
+        "FFT parity <1% vs reference",
+        "Kalman convergence on healthy baseline",
+        "Feature normalization verified"
+      ]
+    },
+    "phase_6": {
+      "description": "Model Training",
+      "criteria": [
+        "AUROC >= 0.95 on validation set",
+        "F1 >= 0.90",
+        "Model size <= 80 KB"
+      ]
+    },
+    "phase_8": {
+      "description": "Quantization",
+      "criteria": [
+        "INT8 AUROC >= 0.92 (drop <= 3%)",
+        "Model size <= 50 KB",
+        "No activation overflow"
+      ]
+    },
+    "phase_10": {
+      "description": "Sensor Acquisition",
+      "criteria": [
+        "1 kHz sampling verified",
+        "Jitter < 1 µs",
+        "Zero sample loss over 1 hour"
+      ]
+    },
+    "phase_11": {
+      "description": "Embedded DSP",
+      "criteria": [
+        "DSP parity <1% vs offline",
+        "Latency <= 100 ms per window",
+        "Workspace <= 100 KB"
+      ]
+    },
+    "phase_12": {
+      "description": "Inference Engine",
+      "criteria": [
+        "Latency <= 300 ms per window",
+        "Arena utilization <= 600 KB",
+        "Reconstruction errors match reference"
+      ]
+    },
+    "phase_15": {
+      "description": "Power Management",
+      "criteria": [
+        "Active power < 50 mW",
+        "Sleep power < 1 mW",
+        "Duty cycle < 1%",
+        "Estimated battery life >= 3 years"
+      ]
+    },
+    "phase_16": {
+      "description": "Final Validation",
+      "criteria": [
+        "All golden vectors pass (DSP + model)",
+        "7-day continuous operation no errors",
+        "Complete documentation",
+        "Security audit passed"
+      ]
+    }
+  },
+  "constraints": {
+    "critical": [
+      "SRAM utilization cannot exceed 1.5 MB (no dynamic allocation)",
+      "Per-window active time cannot exceed 400 ms (600 ms sleep budget)",
+      "Model size cannot exceed 50 KB (quantized INT8)",
+      "Inference latency cannot exceed 300 ms (Cortex-M4F constraint)"
+    ],
+    "high": [
+      "AUROC must remain >= 0.92 after quantization",
+      "False positive rate must stay < 1% under thermal drift",
+      "Watchdog timeout must be respected (no hanging)",
+      "Sample loss tracking must be accurate"
+    ],
+    "medium": [
+      "Debug mode should have minimal overhead (<5% latency)",
+      "Configuration must be hot-reloadable (over LoRaWAN optional)",
+      "Telemetry payload should compress to <20 bytes"
+    ]
+  },
+  "sign_off": {
+    "version": "1.0",
+    "date": "2025-04-19",
+    "status": "approved_draft",
+    "owner": "EdgeSeisFusion Team"
+  }
+}

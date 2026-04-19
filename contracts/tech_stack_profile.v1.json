@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EdgeSeisFusion Tech Stack Profile",
+  "version": "1.0",
+  "description": "Specification of technology choices and rationale",
+  "offline_development": {
+    "language": "Python 3.9+",
+    "reason": "Rapid prototyping, scientific computing libraries, ML ecosystem",
+    "core_libraries": {
+      "numpy": {
+        "version": ">=1.21",
+        "purpose": "Numerical computing, array operations"
+      },
+      "scipy": {
+        "version": ">=1.7",
+        "purpose": "Signal processing (FFT, filtering, DSP)"
+      },
+      "tensorflow": {
+        "version": ">=2.9,<2.13",
+        "purpose": "Model training, quantization, TFLM export"
+      },
+      "librosa": {
+        "version": ">=0.9",
+        "purpose": "Audio/signal analysis utilities"
+      },
+      "scikit-learn": {
+        "version": ">=1.0",
+        "purpose": "Anomaly detection, OC-SVM (optional Phase 7)"
+      },
+      "h5py": {
+        "version": ">=3.3",
+        "purpose": "HDF5 data serialization"
+      },
+      "pytest": {
+        "version": ">=7.0",
+        "purpose": "Unit and integration testing"
+      },
+      "hypothesis": {
+        "version": ">=6.50",
+        "purpose": "Property-based testing"
+      }
+    }
+  },
+  "on_device_firmware": {
+    "language": "C/C++",
+    "reason": "Extreme-edge efficiency, minimal runtime overhead, direct hardware control",
+    "runtime": {
+      "platform": "Sony Spresense SDK v3.0+",
+      "reason": "Mature embedded SDK for ARM Cortex-M4F, CMSIS-DSP integration"
+    },
+    "core_libraries": {
+      "tflm": {
+        "name": "TensorFlow Lite for Microcontrollers",
+        "version": "latest",
+        "purpose": "INT8 model inference, optimized for Cortex-M4F"
+      },
+      "cmsis_dsp": {
+        "name": "ARM CMSIS-DSP",
+        "version": "bundled with SDK",
+        "purpose": "FFT, Kalman filtering, optimized for ARM cores"
+      },
+      "lorawanlib": {
+        "name": "LoRaWAN driver",
+        "version": "vendor-specific",
+        "purpose": "Wireless uplink to network server"
+      }
+    },
+    "compiler_toolchain": {
+      "compiler": "arm-none-eabi-gcc",
+      "version": "10.2+",
+      "reason": "Standard ARM embedded toolchain, wide compatibility"
+    },
+    "build_system": {
+      "build_tool": "CMake",
+      "version": "3.16+",
+      "reason": "Cross-platform, integrates with Spresense SDK, easy to maintain"
+    }
+  },
+  "containerization": {
+    "docker_offline": {
+      "base_image": "tensorflow/tensorflow:latest-gpu",
+      "purpose": "Reproducible training environment with GPU support",
+      "additional_packages": [
+        "python3-dev",
+        "libblas-dev",
+        "liblapack-dev",
+        "gfortran"
+      ]
+    },
+    "docker_firmware": {
+      "base_image": "ubuntu:22.04",
+      "purpose": "Firmware build environment with ARM toolchain",
+      "additional_packages": [
+        "arm-none-eabi-gcc",
+        "arm-none-eabi-newlib",
+        "cmake",
+        "make"
+      ]
+    }
+  },
+  "data_formats": {
+    "raw_sensor": {
+      "format": "HDF5",
+      "reason": "Efficient multi-channel data storage, metadata support, random access"
+    },
+    "configuration": {
+      "format": "YAML",
+      "reason": "Human-readable, version-controlled, comments support"
+    },
+    "model_training": {
+      "format": "h5 (Keras)",
+      "reason": "Standard Keras checkpoint format, easy resumption"
+    },
+    "model_deployment": {
+      "format": "TensorFlow Lite (.tflite)",
+      "reason": "Optimized for mobile/embedded, smaller than SavedModel"
+    },
+    "model_firmware": {
+      "format": "TFLM C++ headers",
+      "reason": "Direct embedding in firmware, no runtime loading"
+    }
+  },
+  "quality_assurance": {
+    "testing": {
+      "unit_tests": {
+        "framework": "pytest",
+        "coverage_target_percent": 80,
+        "location": "tests/"
+      },
+      "integration_tests": {
+        "framework": "pytest + custom harness",
+        "location": "tests/",
+        "examples": [
+          "DSP parity (offline vs embedded)",
+          "Model inference accuracy",
+          "State machine transitions"
+        ]
+      },
+      "property_based_tests": {
+        "framework": "Hypothesis",
+        "examples": [
+          "Configuration round-trip",
+          "Encryption round-trip",
+          "JSON serialization round-trip"
+        ]
+      },
+      "end_to_end_tests": {
+        "framework": "custom scenario replay",
+        "examples": [
+          "Daily check-in workflow",
+          "Proactive alert generation",
+          "Multi-user scenario"
+        ]
+      }
+    },
+    "code_quality": {
+      "python_linter": "flake8",
+      "python_formatter": "black",
+      "python_type_checker": "mypy",
+      "c_linter": "clang-tidy"
+    },
+    "profiling": {
+      "python": "cProfile, memory_profiler",
+      "firmware": "arm-none-eabi-objdump (size), manual timing markers"
+    }
+  },
+  "versioning": {
+    "git_workflow": "Git Flow",
+    "main_branch": "main",
+    "development_branch": "develop",
+    "release_tags": "v{MAJOR}.{MINOR}.{PATCH}",
+    "commit_signing": "Recommended (GPG keys)"
+  },
+  "documentation": {
+    "architecture": "ARCHITECTURE.md (markdown with mermaid diagrams)",
+    "implementation_plan": "tasks.md (structured task list with phases)",
+    "api_docs": "Sphinx + RST for Python modules",
+    "firmware_docs": "Doxygen for C/C++ code"
+  },
+  "deployment_pipeline": {
+    "continuous_integration": {
+      "platform": "GitHub Actions (recommended)",
+      "jobs": [
+        "Python linting + tests",
+        "Firmware build verification",
+        "Golden-vector regression",
+        "Security scanning"
+      ]
+    },
+    "continuous_deployment": {
+      "models": "Manual review required before production",
+      "firmware": "Staged rollout to field devices"
+    }
+  },
+  "security": {
+    "encryption": "AES-256-GCM (if needed for future enhancements)",
+    "model_integrity": "CRC32 on firmware binary",
+    "communication": "LoRaWAN MAC authentication",
+    "secrets_management": "Environment variables or secure vault"
+  },
+  "design_rationale": {
+    "python_offline": "Enables rapid ML research, easy collaboration with universities",
+    "c_firmware": "Necessary for extreme-edge efficiency, real-time guarantees",
+    "tflm_choice": "Only practical option for quantized inference on MCU",
+    "cmake_choice": "Industry standard, avoids Makefiles, easier maintenance",
+    "git_flow": "Supports structured development phases, release management"
+  },
+  "lock_date": "2025-04-19",
+  "ratification_status": "approved_draft"
+}
