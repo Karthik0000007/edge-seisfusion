@@ -1,0 +1,90 @@
+# DSP Parameters Configuration
+# Locked offline, used for both training validation and firmware deployment
+# Phase 5: Reference pipeline specification
+
+# FFT Configuration
+fft:
+  size: 1024                    # FFT resolution: 1024 samples = 1 Hz bins @ 1 kHz
+  window_type: "hann"           # Hanning window for spectral analysis
+  overlap_percent: 50           # 50% overlap for sliding windows
+  nyquist_hz: 500               # Nyquist frequency = 500 Hz @ 1 kHz sampling
+
+# Anti-Alias Filter
+anti_alias_filter:
+  cutoff_hz: 400                # Cutoff at 400 Hz (below Nyquist)
+  order: 128                    # 128-tap FIR filter
+  type: "fir_lowpass"
+  attenuation_db: 60            # Target >60 dB attenuation at Nyquist and beyond
+
+# Frequency Bands (aggregation after FFT)
+frequency_bands:
+  - name: "very_low_freq"       # 0-10 Hz: structural fundamental modes
+    min_hz: 0
+    max_hz: 10
+  - name: "low_freq"            # 10-20 Hz: first harmonic range
+    min_hz: 10
+    max_hz: 20
+  - name: "mid_freq_1"          # 20-50 Hz: 2nd, 3rd harmonics
+    min_hz: 20
+    max_hz: 50
+  - name: "mid_freq_2"          # 50-100 Hz: higher structural modes
+    min_hz: 50
+    max_hz: 100
+  - name: "high_freq_1"         # 100-150 Hz: sensor-limited range
+    min_hz: 100
+    max_hz: 150
+  - name: "high_freq_2"         # 150-250 Hz: acoustic range, strain transients
+    min_hz: 150
+    max_hz: 250
+  - name: "noise_floor"         # 250-500 Hz: high-frequency noise
+    min_hz: 250
+    max_hz: 500
+
+# Kalman Filter Parameters (per-band)
+kalman_filter:
+  process_noise_var: 0.01       # σ²_process ≈ 0.01 (baseline drift tolerance)
+  measurement_noise_var: 0.05   # σ²_meas ≈ 0.05 (sensor noise)
+  initial_state_variance: 1.0   # Initial uncertainty
+
+# Feature Normalization
+normalization:
+  type: "z_score"               # Zero-mean, unit-variance per channel
+  rolling_window_samples: 100   # Use 100 windows for running mean/std
+  min_std: 0.01                 # Prevent division by near-zero
+
+# Sampling Configuration
+sampling:
+  rate_hz: 1000                 # 1 kHz deterministic sampling
+  window_size_samples: 1024     # 1 second per window
+  window_duration_sec: 1.0
+  channels: 5                   # Accel-X, Accel-Y, Accel-Z, Strain, Acoustic
+  jitter_tolerance_us: 1.0      # Max jitter: 1 microsecond
+
+# Channel Configuration
+channels:
+  - name: "accel_x"
+    unit: "mg"
+    range: [-2000, 2000]
+    protocol: "i2c"
+  - name: "accel_y"
+    unit: "mg"
+    range: [-2000, 2000]
+    protocol: "i2c"
+  - name: "accel_z"
+    unit: "mg"
+    range: [-2000, 2000]
+    protocol: "i2c"
+  - name: "strain"
+    unit: "mv"
+    range: [0, 5000]
+    protocol: "spi"
+  - name: "acoustic"
+    unit: "db"
+    range: [0, 120]
+    protocol: "adc"
+
+# Output Feature Shape
+output:
+  feature_tensor_shape: [1024, 5, 7]  # [samples, channels, frequency_bands]
+  total_features: 35                   # 5 channels * 7 bands = 35 features
+  dtype: "float32"                     # Offline: float32; embedded: quantized int8
